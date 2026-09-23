@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+/*
+  Палитра задана обычными CSS-переменными, а @theme только ссылается на них.
+  Благодаря этому смена темы — это подмена значений на :root, без пересборки
+  и без дублирования классов вроде dark:bg-...
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #e60000;
+  --brand-hover: #cc0000;
+
+  --page: #ffffff;
+  --card: #ffffff;
+  --ink: #1a1a1a;
+  --muted: #666666;
+  --surface: #f8f9fa;
+  --line: #e5e5e5;
+
+  /* Блок, который остаётся тёмным в обеих темах (подвал) */
+  --inverse: #1a1a1a;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --brand: #ff3b3b;
+  --brand-hover: #ff5c5c;
+
+  /*
+   * Три уровня должны различаться на глаз, иначе карточка не отделяется
+   * от секции, а поле ввода — от карточки:
+   * page (фон страницы) < surface (полосы секций, поля ввода) < card (карточки)
+   */
+  --page: #0e0f11;
+  --surface: #131517;
+  --card: #1c1f23;
+  --ink: #f1f2f4;
+  --muted: #9ca0a6;
+  --line: #2e3237;
+
+  --inverse: #08090a;
+
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-inverse: var(--inverse);
+
+  --font-heading: var(--font-montserrat), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+
+  --radius-card: 20px;
+
+  /* Брейкпоинт из раздела 6 спеки: <=480px — чат на весь экран */
+  --breakpoint-xs: 481px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background-color: var(--page);
+  line-height: 1.6;
+  overflow-x: hidden;
+  /* Плавное переключение темы, но не для всего подряд */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  line-height: 1.15;
 }
