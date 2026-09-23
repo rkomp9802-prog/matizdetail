@@ -2,7 +2,12 @@ import { GoogleGenAI } from '@google/genai';
 import { buildContext, getBusinessProfile } from './businessInfo';
 
 /** Модель можно переопределить через env, не трогая код */
-const MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+/*
+ * Через || , а не ?? : пустая переменная окружения — это пустая строка,
+ * а не undefined, и ?? её бы пропустил. Тогда в Gemini ушло бы model: ''
+ * и каждый запрос падал бы с «model is required».
+ */
+const MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
 
 export function isGeminiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
