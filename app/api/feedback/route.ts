@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendTelegramFeedback } from '@/lib/telegram';
+import { isCrmConfigured, sendLeadToCrm } from '@/lib/crm';
 
 export const runtime = 'nodejs';
 
@@ -43,11 +44,38 @@ export async function POST(request: Request) {
     message,
   ].join('\n');
 
+  /*
+   * Два независимых получателя: Telegram для быстрого уведомления и CRM
+   * для учёта. Считаем заявку принятой, если сработал хотя бы один, —
+   * терять обращение из-за того, что один из каналов прилёг, нельзя.
+   */
+  let telegramOk = false;
   try {
     await sendTelegramFeedback(text);
-    return NextResponse.json({ success: true });
+    telegramOk = true;
   } catch (error) {
     console.error('[feedback] не удалось отправить в Telegram:', error);
+  }
+
+  let crmOk = false;
+  if (isCrmConfigured()) {
+    // CRM требует имя, заявку без него она отклонит
+    if (!name) {
+      console.error('[feedback] заявка без имени — в CRM не передана');
+    } else {
+      const result = await sendLeadToCrm({ name, contact, message });
+      crmOk = result.ok;
+      if (result.ok) {
+        console.log('[feedback] заявка в CRM, id:', result.leadId);
+      } else {
+        console.error('[feedback] CRM не приняла заявку:', result.error);
+      }
+    }
+  }
+
+  if (!telegramOk && !crmOk) {
     return NextResponse.json({ success: false }, { status: 500 });
   }
+
+  return NextResponse.json({ success: true });
 }

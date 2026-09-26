@@ -6,10 +6,18 @@ type Status = 'idle' | 'sending' | 'sent' | 'failed';
 
 const EMPTY = { name: '', contact: '', message: '', website: '' };
 
+/** Имя обязательно, потому что CRM не принимает заявку без него */
+const ERRORS: Record<string, string> = {
+  name: 'Представьтесь, пожалуйста',
+  message: 'Напишите, с чем вам помочь',
+};
+
 export default function FeedbackForm() {
   const [values, setValues] = useState(EMPTY);
   const [status, setStatus] = useState<Status>('idle');
+  /** какое поле не заполнено: 'name' | 'message' */
   const [error, setError] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
   function update(field: keyof typeof EMPTY, value: string) {
@@ -27,8 +35,14 @@ export default function FeedbackForm() {
      * выглядит сломанной и не объясняет, чего от человека хотят.
      * Вместо этого — подсказка и фокус на нужном поле.
      */
+    if (!values.name.trim()) {
+      setError('name');
+      nameRef.current?.focus();
+      return;
+    }
+
     if (!values.message.trim()) {
-      setError('Напишите, с чем вам помочь');
+      setError('message');
       messageRef.current?.focus();
       return;
     }
@@ -94,16 +108,24 @@ export default function FeedbackForm() {
             Имя
           </label>
           <input
+            ref={nameRef}
             id="feedback-name"
             name="name"
             type="text"
             autoComplete="name"
             disabled={sending}
+            aria-invalid={error === 'name'}
+            aria-describedby={error === 'name' ? 'feedback-error-name' : undefined}
             value={values.name}
             onChange={(e) => update('name', e.target.value)}
             placeholder="Как к вам обращаться"
-            className={fieldClass}
+            className={`${fieldClass} ${error === 'name' ? 'border-brand' : ''}`}
           />
+          {error === 'name' && (
+            <p id="feedback-error-name" className="mt-2 text-xs text-brand">
+              {ERRORS.name}
+            </p>
+          )}
         </div>
 
         <div>
@@ -134,16 +156,16 @@ export default function FeedbackForm() {
           name="message"
           rows={5}
           disabled={sending}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? 'feedback-error' : undefined}
+          aria-invalid={error === 'message'}
+          aria-describedby={error === 'message' ? 'feedback-error-message' : undefined}
           value={values.message}
           onChange={(e) => update('message', e.target.value)}
           placeholder="Опишите, что нужно сделать"
-          className={`${fieldClass} resize-y ${error ? 'border-brand' : ''}`}
+          className={`${fieldClass} resize-y ${error === 'message' ? 'border-brand' : ''}`}
         />
-        {error && (
-          <p id="feedback-error" className="mt-2 text-xs text-brand">
-            {error}
+        {error === 'message' && (
+          <p id="feedback-error-message" className="mt-2 text-xs text-brand">
+            {ERRORS.message}
           </p>
         )}
       </div>
